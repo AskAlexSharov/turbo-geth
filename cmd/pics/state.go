@@ -161,9 +161,9 @@ func stateDatabaseComparison(first ethdb.KV, second ethdb.KV, number int) error 
 		return first.View(context.Background(), func(firstTx ethdb.Tx) error {
 			for _, bucketName := range dbutils.Buckets {
 				bucketName := bucketName
-				b := readTx.Bucket(bucketName)
+				c := readTx.Cursor(bucketName)
 				firstB := firstTx.Bucket(bucketName)
-				if err2 := b.Cursor().Walk(func(k, v []byte) (bool, error) {
+				if err2 := c.Walk(func(k, v []byte) (bool, error) {
 					if firstB != nil {
 						if firstV, _ := firstB.Get(k); firstV != nil && bytes.Equal(v, firstV) {
 							// Skip the record that is the same as in the first Db
