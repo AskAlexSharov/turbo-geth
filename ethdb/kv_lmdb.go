@@ -246,7 +246,7 @@ type lmdbTx struct {
 }
 
 type lmdbBucket struct {
-	isDupsort bool
+	isDupSort bool
 	dupFrom   int
 	dupTo     int
 	name      string
@@ -305,7 +305,7 @@ func (b *lmdbBucket) Create() error {
 	if !b.tx.db.opts.readOnly {
 		flags |= lmdb.Create
 	}
-	if b.isDupsort {
+	if b.isDupSort {
 		flags |= lmdb.DupSort
 	}
 	dbi, err := b.tx.tx.OpenDBI(string(b.name), flags)
@@ -365,7 +365,7 @@ func (tx *lmdbTx) Bucket(name string) Bucket {
 		panic(fmt.Errorf("%w: %s", ErrUnknownBucket, name))
 	}
 
-	return &lmdbBucket{tx: tx, dbi: tx.db.buckets[name], isDupsort: cfg.IsDupsort, dupFrom: cfg.DupFromLen, dupTo: cfg.DupToLen, name: name}
+	return &lmdbBucket{tx: tx, dbi: tx.db.buckets[name], isDupSort: cfg.IsDupSort, dupFrom: cfg.DupFromLen, dupTo: cfg.DupToLen, name: name}
 }
 
 func (tx *lmdbTx) Commit(ctx context.Context) error {
@@ -437,7 +437,7 @@ func (c *LmdbCursor) NoValues() NoValuesCursor {
 }
 
 func (b lmdbBucket) Get(key []byte) ([]byte, error) {
-	if b.isDupsort {
+	if b.isDupSort {
 		return b.getDupSort(key)
 	}
 
@@ -546,11 +546,11 @@ func (c *LmdbCursor) Last() ([]byte, []byte, error) {
 		if lmdb.IsNotFound(err) {
 			return nil, nil, nil
 		}
-		err = fmt.Errorf("failed LmdbKV cursor.Last(): %w, bucket: %s, isDupsort: %t", err, c.bucket.name, c.bucket.isDupsort)
+		err = fmt.Errorf("failed LmdbKV cursor.Last(): %w, bucket: %s, isDupSort: %t", err, c.bucket.name, c.bucket.isDupSort)
 		return []byte{}, nil, err
 	}
 
-	if c.bucket.isDupsort {
+	if c.bucket.isDupSort {
 		if k == nil {
 			return k, v, nil
 		}
@@ -559,7 +559,7 @@ func (c *LmdbCursor) Last() ([]byte, []byte, error) {
 			if lmdb.IsNotFound(err) {
 				return nil, nil, nil
 			}
-			err = fmt.Errorf("failed LmdbKV cursor.Last(): %w, bucket: %s, isDupsort: %t", err, c.bucket.name, c.bucket.isDupsort)
+			err = fmt.Errorf("failed LmdbKV cursor.Last(): %w, bucket: %s, isDupSort: %t", err, c.bucket.name, c.bucket.isDupSort)
 			return []byte{}, nil, err
 		}
 	}
@@ -574,7 +574,7 @@ func (c *LmdbCursor) Seek(seek []byte) (k, v []byte, err error) {
 		}
 	}
 
-	if c.bucket.isDupsort {
+	if c.bucket.isDupSort {
 		return c.seekDupSort(seek)
 	}
 
@@ -587,7 +587,7 @@ func (c *LmdbCursor) Seek(seek []byte) (k, v []byte, err error) {
 		if lmdb.IsNotFound(err) {
 			return nil, nil, nil
 		}
-		err = fmt.Errorf("failed LmdbKV cursor.Seek(): %w, bucket: %s, isDupsort: %t, key: %x", err, c.bucket.name, c.bucket.isDupsort, seek)
+		err = fmt.Errorf("failed LmdbKV cursor.Seek(): %w, bucket: %s, isDupSort: %t, key: %x", err, c.bucket.name, c.bucket.isDupSort, seek)
 		return []byte{}, nil, err
 	}
 	if c.prefix != nil && !bytes.HasPrefix(k, c.prefix) {
@@ -663,7 +663,7 @@ func (c *LmdbCursor) Next() (k, v []byte, err error) {
 	default:
 	}
 
-	if c.bucket.isDupsort {
+	if c.bucket.isDupSort {
 		return c.nextDupSort()
 	}
 
@@ -719,7 +719,7 @@ func (c *LmdbCursor) Delete(key []byte) error {
 		}
 	}
 
-	if c.bucket.isDupsort {
+	if c.bucket.isDupSort {
 		return c.deleteDupSort(key)
 	}
 
@@ -782,7 +782,7 @@ func (c *LmdbCursor) Put(key []byte, value []byte) error {
 		}
 	}
 
-	if c.bucket.isDupsort {
+	if c.bucket.isDupSort {
 		return c.putDupSort(key, value)
 	}
 
@@ -905,7 +905,7 @@ func (c *LmdbCursor) Append(key []byte, value []byte) error {
 		}
 	}
 	b := c.bucket
-	if b.isDupsort {
+	if b.isDupSort {
 		if len(key) != b.dupFrom && len(key) >= b.dupTo {
 			return fmt.Errorf("dupsort bucket: %s, can have keys of len==%d and len<%d. key: %x", b.name, b.dupFrom, b.dupTo, key)
 		}
